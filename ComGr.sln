@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.15
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Colours", "ComGr\Colours.csproj", "{30AF224E-B95D-4A39-8877-D33BAAADFA0A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SphereScene", "SphereScene\SphereScene.csproj", "{642F784F-2534-4FAD-9C36-81B716E987A9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{30AF224E-B95D-4A39-8877-D33BAAADFA0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30AF224E-B95D-4A39-8877-D33BAAADFA0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30AF224E-B95D-4A39-8877-D33BAAADFA0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30AF224E-B95D-4A39-8877-D33BAAADFA0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{642F784F-2534-4FAD-9C36-81B716E987A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{642F784F-2534-4FAD-9C36-81B716E987A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{642F784F-2534-4FAD-9C36-81B716E987A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{642F784F-2534-4FAD-9C36-81B716E987A9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F86C2AB3-FB28-4ACB-B736-456146FF73DE}
+	EndGlobalSection
+EndGlobal
