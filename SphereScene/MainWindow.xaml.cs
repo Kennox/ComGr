@@ -24,7 +24,7 @@ namespace SphereScene {
 
         public MainWindow() {
             WriteableBitmap = new WriteableBitmap(666, 666, 96, 96, PixelFormats.Bgr32, null);
-            InitializeComponent();
+            Paint();
         }
         
         public Vector3 Eye = new Vector3(0, 0, -4);
@@ -43,44 +43,62 @@ namespace SphereScene {
 
 
 
-        public Vector3 CreateEyeRay(Vector3 Eye, Vector3 LookAt, float FOV, Vector2 Pixel) {
+        public Ray CreateEyeRay(Vector3 Eye, Vector3 LookAt, float FOV, Vector2 Pixel) {
             Vector3 f = LookAt - Eye;
             Vector3 r = Vector3.Cross(f, Up);
             Vector3 u = Vector3.Cross(r, f);
 
             Vector3 d = Vector3.Normalize(f) + Pixel.X * r * (float)Math.Tan(FOV / 2) + Pixel.Y * u * (float) Math.Tan(FOV / 2);
 
-            return Vector3.Normalize(d);
+            return new Ray(Eye, Vector3.Normalize(d));
         }
 
-        public Vector3 FindClosestHitPoint(Sphere[] Scene, Vector3 Ray) {
+        public HitPoint FindClosestHitPoint(Sphere[] Scene, Ray Ray) {
 
             Vector3 H = new Vector3(0, 0, 0);
+            Vector3 Colour = new Vector3(0, 0, 0);
+            
 
             for (int i = 0; i < Scene.Length; i++) {
-                var a = 1;
-                var b = 2 * Vector3.Dot((Eye - Scene[i].Centre), Ray);
-                var c = (Eye - (Scene[i].Centre)).Length() - Scene[i].Radius;
-                var Discriminant = b * b - 4 * a * c;
-                if (Discriminant >= 0) { //at least one hit
-                    var Lambda1 = -b + Math.Sqrt(Discriminant) / (2 * a);
-                    var Lambda2 = -b - Math.Sqrt(Discriminant) / (2 * a);
-                    if (Lambda1 > 0 && Lambda2 > 0) {
-                        H = Eye + (float) Math.Min(Lambda1, Lambda2) * Ray;
-                    } else if (Lambda1 > 0) {
-                        H = Eye + (float) Lambda1 * Ray;
-                    } else if (Lambda2 > 0) {
-                        H = Eye + (float) Lambda2 * Ray;
-                    }
+                float Lambda = Scene[i].FindHitPoint(Scene[i], Ray);
+                if (Lambda > 0) {
+                    H = Ray.Origin + Lambda * Ray.Direction;
+                    Colour = Scene[i].Colour;
                 }
+
             }
-            return H;
+            HitPoint Hitpoint = new HitPoint(Ray, H, Colour);
+            return Hitpoint;
         }
 
-        public Vector3 CalcColour(Sphere[] Scene, Vector3 Ray) {
+        public Vector3 CalcColour(Sphere[] Scene, Ray Ray) {
             var H = FindClosestHitPoint(Scene, Ray);
 
-            return null;
+            return H.Colour;
+        }
+
+        public void Paint() {
+            int width = WriteableBitmap.PixelWidth;
+            int height = WriteableBitmap.PixelHeight;
+            int cc = 4; //Colour Channels
+            byte[] ColourData = new byte[width * height * cc];
+
+            for (int i = 0; i < width; i++) {
+
+                for (int j = 0; j < height; j++) {
+
+                    Vector3 Colour = CalcColour(Scene, CreateEyeRay(Eye, LookAt, FOV, new Vector2((float) 2.0 / width * i - 1, (float)2.0 / height * j - 1)));
+                    ColourData[(i * 4 + j * width)] = (byte) Colour.X;
+                    ColourData[(i * 4 + j * width + 1)] = (byte) Colour.Y;
+                    ColourData[(i * 4 + j * width + 2)] = (byte) Colour.Z;
+                }
+            }
+
+            WriteableBitmap.Lock();
+            WriteableBitmap.WritePixels(new Int32Rect(0, 0, width, height), ColourData, width * cc, 0, 0);
+            WriteableBitmap.Unlock();
+
         }
     }
+
 }
