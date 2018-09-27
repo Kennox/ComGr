@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -31,10 +32,11 @@ namespace SphereScene {
         Vector3 LookAt = new Vector3(0, 0, 6);
         Vector3 Up = new Vector3(0, 1, 0);
         float FOV = (float) (36 * Math.PI / 180);
+        Light Light = new Light(new Vector3(0, -0.9f, 0), new Vector3(0.8f, 1, 0.8f));
 
 
-        public Sphere[] Scene = { new Sphere(new Vector3(-1001, 0, 0), 1000, new Vector3(0, 0, 1)),
-                            new Sphere(new Vector3(1001, 0, 0), 1000, new Vector3(1, 0, 0)),
+        public Sphere[] Scene = { new Sphere(new Vector3(-1001, 0, 0), 1000, new Vector3(1, 0, 0)),
+                            new Sphere(new Vector3(1001, 0, 0), 1000, new Vector3(0, 0, 1)),
                             new Sphere(new Vector3(0, 0, 1001), 1000, new Vector3(1, 1, 1)),
                             new Sphere(new Vector3(0, -1001, 0), 1000, new Vector3(1, 1, 1)),
                             new Sphere(new Vector3(0, 1001, 0), 1000, new Vector3(1, 1, 1)),
@@ -45,12 +47,10 @@ namespace SphereScene {
 
         public Ray CreateEyeRay(Vector3 Eye, Vector3 LookAt, float FOV, Vector2 Pixel) {
 
-            Vector3 f = LookAt - Eye;
-            Vector3 r = Vector3.Cross(f, Up);
-            Vector3 u = Vector3.Cross(r, f);
-
-            //TODO check formula!!
-            Vector3 d = Vector3.Normalize(f) + Pixel.X * r * (float)Math.Tan(FOV / 2) + Pixel.Y * u * (float) Math.Tan(FOV / 2);
+            Vector3 f = Vector3.Normalize(LookAt - Eye);
+            Vector3 r = Vector3.Normalize(Vector3.Cross(Up, f));
+            Vector3 u = Vector3.Normalize(Vector3.Cross(f, r));
+            Vector3 d = f + Pixel.X * r * (float)Math.Tan(FOV / 2) + Pixel.Y * u * (float) Math.Tan(FOV / 2);
 
             return new Ray(Eye, Vector3.Normalize(d));
         }
@@ -59,6 +59,7 @@ namespace SphereScene {
 
             Vector3 H = new Vector3(0, 0, 0);
             Vector3 Colour = new Vector3(0, 0, 0);
+            Vector3 Normal = new Vector3(0, 0, 0);
             float SmallestLambda = float.PositiveInfinity;
             
             for (int i = 0; i < Scene.Length; i++) {
@@ -69,18 +70,33 @@ namespace SphereScene {
 
                     H = Ray.Origin + Lambda * Ray.Direction;
                     Colour = Scene[i].Colour;
+                    Normal = Vector3.Normalize(H - Scene[i].Centre);
                     SmallestLambda = Lambda;
                 }
             }
-            HitPoint Hitpoint = new HitPoint(Ray, H, Colour);
+            HitPoint Hitpoint = new HitPoint(Ray, H, Colour, Normal);
             return Hitpoint;
         }
 
         public Vector3 CalcColour(Sphere[] Scene, Ray Ray) {
 
             HitPoint Hitpoint = FindClosestHitPoint(Scene, Ray);
+            Vector3 Diffuse = new Vector3(0, 0, 0);
+            Vector3 Specular = new Vector3(0, 0, 0);
+            Vector3 Reflection;
 
-            return Hitpoint.Colour;
+            Vector3 L = Vector3.Normalize(Light.Position - Hitpoint.Position);
+            float nL = Vector3.Dot(Hitpoint.Normal, L);
+
+            if (nL >= 0) {
+
+                Diffuse = Vector3.Multiply(Light.Colour, Hitpoint.Colour) * nL;
+                Vector3 s = L - Vector3.Dot(L, Hitpoint.Normal) * Hitpoint.Normal;
+                Vector3 r = L - 2 * s;
+                Specular = Light.Colour * (float) Math.Pow(Vector3.Dot(Vector3.Normalize(r), Vector3.Normalize(Hitpoint.Position - Eye)), 10);
+            }
+
+            return Diffuse + Specular;
         }
 
         public void Paint() {
@@ -100,12 +116,9 @@ namespace SphereScene {
                     ColourData[(i * 4 + j * width * cc + 2)] = Convert.ToByte(Colour.X * 255);
                 }
             }
-
             WriteableBitmap.Lock();
             WriteableBitmap.WritePixels(new Int32Rect(0, 0, width, height), ColourData, width * cc, 0);
             WriteableBitmap.Unlock();
-
         }
     }
-
 }

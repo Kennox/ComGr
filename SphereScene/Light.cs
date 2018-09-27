@@ -7,19 +7,15 @@ using System.Threading.Tasks;
 
 namespace SphereScene {
 
-    public class HitPoint {
+    class Light {
 
-        public Ray Ray { get; set; }
         public Vector3 Position { get; set; }
         public Vector3 Colour { get; set; }
-        public Vector3 Normal { get; set; }
 
-        public HitPoint(Ray Ray, Vector3 Position, Vector3 Colour, Vector3 Normal) {
+        public Light(Vector3 Position, Vector3 Colour) {
 
-            this.Ray = Ray;
             this.Position = Position;
             this.Colour = Colour;
-            this.Normal = Normal;
         }
     }
 }

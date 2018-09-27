@@ -30,8 +30,8 @@ namespace SphereScene {
 
             if (Discriminant >= 0) { //at least one hit
 
-                var Lambda1 = -b + Math.Sqrt(Discriminant) / (2 * a);
-                var Lambda2 = -b - Math.Sqrt(Discriminant) / (2 * a);
+                var Lambda1 = (-b + Math.Sqrt(Discriminant)) / (2 * a);
+                var Lambda2 = (-b - Math.Sqrt(Discriminant)) / (2 * a);
 
                 if (Lambda1 > 0 && Lambda2 > 0) {
 
