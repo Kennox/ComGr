@@ -123,6 +123,8 @@ namespace SphereScene {
 
                 }
 
+                //Shadow
+
                 Ray LightRay = new Ray(Hitpoint.Position, Vector3.Normalize(Lights[l].Position - Hitpoint.Position));
                 LightRay.Origin += LightRay.Direction * 0.001f + Hitpoint.Normal * 0.001f;
 
@@ -134,6 +136,8 @@ namespace SphereScene {
                     }
                 }
             }
+
+            //Reflection
 
             if (Recursion > 0) {
                 Ray Reflect = new Ray(Hitpoint.Position, Vector3.Reflect(Ray.Direction, Hitpoint.Normal));
@@ -175,26 +179,25 @@ namespace SphereScene {
         }
 
         public BVHSphere CreateBVHSpheres(Sphere[] Scene) {
-            float ShortestDistance = float.MaxValue;
+            float SmallestRadius = float.MaxValue;
             Sphere S1 = null;
             Sphere S2 = null;
             BVHSphere End = null;
             
             for(int i = 0; i < Scene.Length; i++) {
-                int j = i + 1;
-                for (; j < Scene.Length; j++) {
+                for (int j = i + 1; j < Scene.Length; j++) {
 
-                    float Dist = (Scene[i].Centre - Scene[j].Centre).Length();
-                    if (Dist < ShortestDistance) {
-                        ShortestDistance = Dist;
+                    float Rad = ((Scene[i].Centre - Scene[j].Centre).Length() + (Scene[i].Radius + Scene[j].Radius)) / 2f;
+                    //float Dist = (Scene[i].Centre - Scene[j].Centre).Length();
+                    if (Rad < SmallestRadius) {
+                        SmallestRadius = Rad;
                         S1 = Scene[i];
                         S2 = Scene[j];
                     }
                 }
-                j++;
             }
 
-            if (Scene.Length -1 > 1) {
+            if (Scene.Length > 1) {
                 Sphere[] NextScene = new Sphere[Scene.Length - 1];
                 int index = 0;
                 for (int i = 0; i < Scene.Length; i++) {
@@ -203,11 +206,12 @@ namespace SphereScene {
                         index++;
                     }
                 }
-                float Radius = ((S1.Centre - S2.Centre).Length() + (S1.Radius - S2.Radius)) / 2f;
+                float Radius = ((S1.Centre - S2.Centre).Length() + (S1.Radius + S2.Radius)) / 2f;
                 Vector3 Center = S1.Centre + Vector3.Normalize(S2.Centre - S1.Centre) * (Radius - S1.Radius);
                 NextScene[Scene.Length - 2] = new BVHSphere(Center, Radius, 0, 0, S1, S2);
-            End = CreateBVHSpheres(NextScene);
-            }
+
+                End = CreateBVHSpheres(NextScene);
+            } else { return (BVHSphere) Scene[0]; }
             return End;
         }
     }
