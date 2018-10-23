@@ -58,6 +58,7 @@
     </ApplicationDefinition>
     <Compile Include="HitPoint.cs" />
     <Compile Include="Light.cs" />
+    <Compile Include="RandomExtensions.cs" />
     <Compile Include="Ray.cs" />
     <Compile Include="Sphere.cs" />
     <Page Include="MainWindow.xaml">

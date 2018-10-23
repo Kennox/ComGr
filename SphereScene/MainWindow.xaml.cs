@@ -26,11 +26,12 @@ namespace SphereScene {
         Vector3 LookAt = new Vector3(0, 0, 6);
         Vector3 Up = new Vector3(0, 1, 0);
         float FOV = (float)(36 * Math.PI / 180);
-        Light Light = new Light(new Vector3(0, -0.9f, 0), new Vector3(1.0f, 1, 1.0f));
+        Light Light = new Light(new Vector3(0, -0.8f, 0), new Vector3(1.0f, 1, 1.0f));
 
         static Light[] Lights = new Light[1];
-        Light LightRed = new Light(new Vector3(0, -0.9f, -0.5f), new Vector3(1, 0.0f, 0.0f));
-        Light LightBlue = new Light(new Vector3(0, -0.9f, 0.5f), new Vector3(0.0f, 0.0f, 1));
+        Light LightRed = new Light(new Vector3(0.5f, -0.9f, -0.5f), new Vector3(0.8f, 0.1f, 0.1f));
+        Light LightGreen = new Light(new Vector3(-0.5f, -0.9f, 0), new Vector3(0.1f, 0.8f, 0.1f));
+        Light LightBlue = new Light(new Vector3(0.5f, -0.9f, 0.5f), new Vector3(0.1f, 0.1f, 0.8f));
 
         int RecursionDepth = 2;
 
@@ -43,14 +44,18 @@ namespace SphereScene {
                             new PlainSphere(new Vector3(0, 0, 1001), 1000, new Vector3(1, 1, 1), 0, 0),
                             new PlainSphere(new Vector3(0, -1001, 0), 1000, new Vector3(1, 1, 1), 0, 0),
                             new PlainSphere(new Vector3(0, 1001, 0), 1000, new Vector3(1, 1, 1), 0, 0),
-                            new TextureSphere(new Vector3(-0.6f, 0.7f, -0.6f), 0.3f, Sun, 0.1f, 0),
-                            new TextureSphere(new Vector3(0.3f, 0.4f, 0.3f), 0.6f, Earth, 0.1f, 0f)};
+                            //new TextureSphere(new Vector3(-0.6f, 0.7f, -0.6f), 0.3f, Earth, 0f, 0.1f),
+                            //new TextureSphere(new Vector3(0.3f, 0.4f, 0.3f), 0.6f, Sun, 0f, 0.1f)};
+                            new PlainSphere(new Vector3(-0.6f, 0.7f, -0.6f), 0.3f, new Vector3(1, 1, 0), 0.1f, 0),
+                            new PlainSphere(new Vector3(0.3f, 0.4f, 0.3f), 0.6f, new Vector3(0.8f, 1, 0.8f), 0.1f, 0)};
+
 
         public static BVHSphere BVHScene;
 
         public MainWindow() {
             WriteableBitmap = new WriteableBitmap(666, 666, 96, 96, PixelFormats.Bgr32, null);
-            Lights[0] = Light;
+            Lights[0] = Light; //single light
+            //Lights[0] = LightGreen;     //multiple coloured lights
             //Lights[1] = LightBlue;
             //Lights[2] = LightRed;
             BVHScene = CreateBVHSpheres(Scene);
@@ -68,6 +73,8 @@ namespace SphereScene {
             return new Ray(Eye, Vector3.Normalize(d));
         }
 
+        //find hitpoint in a scene of many shperes
+        //isn't used anymore!!!!
         public HitPoint FindClosestHitPoint(Sphere[] Scene, Ray Ray) {
 
             Sphere HitSphere = null;
@@ -89,13 +96,51 @@ namespace SphereScene {
                     HitSphere = Scene[i];
                 }
             }
-            HitPoint Hitpoint = new HitPoint(Ray, H, Normal, HitSphere);
+            HitPoint Hitpoint = new HitPoint(Ray, H, Normal, HitSphere, SmallestLambda);
             return Hitpoint;
         }
 
-        public Vector3 CalcColour(Sphere[] Scene, Ray Ray, int Recursion) {
+        //find hitpoint in a bounding shpere
+        public HitPoint FindClosestHitPoint(Sphere Scene, Ray Ray) {
 
-            HitPoint Hitpoint = FindClosestHitPoint(Scene, Ray);
+            Sphere HitSphere = null;
+            Vector3 H = new Vector3(0, 0, 0);
+            Vector3 Normal = new Vector3(0, 0, 0);
+
+            float Lambda = Scene.FindHitPoint(Scene, Ray); //returns 0 if no hit was found
+            if (Lambda > 0) {
+                if (Scene is BVHSphere BVH) {
+                    HitPoint HpS1 = FindClosestHitPoint(BVH.S1, Ray);
+                    HitPoint HpS2 = FindClosestHitPoint(BVH.S2, Ray);
+
+                    if (HpS1.Lambda > 0 && HpS2.Lambda > 0) {
+
+                        return HpS1.Lambda < HpS2.Lambda ? HpS1 : HpS2;
+
+                    } else if (HpS1.Lambda > 0) {
+
+                        return HpS1;
+
+                    } else if (HpS2.Lambda > 0) {
+
+                        return HpS2;
+                    }
+                    Lambda = 0;
+                } else {
+                    H = Ray.Origin + Lambda * Ray.Direction;
+                    Normal = Vector3.Normalize(H - Scene.Centre);
+                    HitSphere = Scene;
+                }
+            }
+
+            HitPoint Hitpoint = new HitPoint(Ray, H, Normal, HitSphere, Lambda);
+            return Hitpoint;
+        }
+
+        //everything colours
+        public Vector3 CalcColour(Ray Ray, int Recursion) {
+
+            HitPoint Hitpoint = FindClosestHitPoint(BVHScene, Ray);
             if (Hitpoint.Sphere == null) {
                 return Vector3.Zero;
             }
@@ -103,14 +148,13 @@ namespace SphereScene {
                 return Hitpoint.Sphere.GetColour(Hitpoint.Normal);
             }
 
-            Vector3 Diffuse = new Vector3(0, 0, 0);
-            Vector3 Specular = new Vector3(0, 0, 0);
+            Vector3 Diffuse = Vector3.Zero;
+            Vector3 Specular = Vector3.Zero;
             Vector3 Shadow = Vector3.Zero;
             Vector3 Reflection = Vector3.Zero;
 
             for (int l = 0; l < Lights.Length; l++) {
 
-                Shadow += Lights[l].Colour;
                 Vector3 L = Vector3.Normalize(Lights[l].Position - Hitpoint.Position);
                 float nL = Vector3.Dot(Hitpoint.Normal, L);
 
@@ -124,17 +168,38 @@ namespace SphereScene {
                 }
 
                 //Shadow
+                Random random = new Random();
+                Vector3 LH = Vector3.Normalize(Hitpoint.Position - Lights[l].Position);
+                int ShadowCounter = 0;
 
-                Ray LightRay = new Ray(Hitpoint.Position, Vector3.Normalize(Lights[l].Position - Hitpoint.Position));
-                LightRay.Origin += LightRay.Direction * 0.001f + Hitpoint.Normal * 0.001f;
+                int z = 0;
+                while (z < 8) { //amount of shadow-feelers
+                    float lightRadius = 0.19f;
+                    float radius = (float)(random.NextDouble());
+                    float theta = (float)(random.NextDouble() * 2 * Math.PI);
+                    float x = (float)(Math.Sqrt(radius) * Math.Sin(theta));
+                    float y = (float)(Math.Sqrt(radius) * Math.Cos(theta));
 
-                for (int i = 0; i < Scene.Length; i++) {
-                    float Lambda = Scene[i].FindHitPoint(Scene[i], LightRay);
-                    if (Lambda != 0 && Lambda < (Lights[l].Position - Hitpoint.Position).Length()) {
-                        Shadow -= Lights[l].Colour * 0.99f;
-                        break;
+                    Vector3 Nx = Vector3.Normalize(Vector3.Cross(LH, Up));
+                    Vector3 Ny = Vector3.Normalize(Vector3.Cross(LH, Nx));
+
+                    Vector3 Point = Lights[l].Position + lightRadius * Nx * x + lightRadius * Ny * y;//point on disk
+
+                    Ray LightRay = new Ray(Hitpoint.Position, Vector3.Normalize(Point - Hitpoint.Position)); //used for soft shadows
+                    //Ray LightRay = new Ray(Hitpoint.Position, Vector3.Normalize(Lights[l].Position - Hitpoint.Position)); //used for basic shadow
+                    LightRay.Origin += LightRay.Direction * 0.001f + Hitpoint.Normal * 0.001f;
+
+                    HitPoint ShadowHp = FindClosestHitPoint(BVHScene, LightRay);
+                    if (ShadowHp.Sphere != null) {
+                        float Lambda = ShadowHp.Lambda;
+                        if (Lambda != 0 && Lambda < (Point - Hitpoint.Position).Length()) { //TODO float ungenauigkeit beheben?
+                            ShadowCounter++;
+                        }
                     }
+                    z++;
                 }
+                Shadow += Lights[l].Colour * (float) ((z - ShadowCounter) / (float) z);
+                Shadow += Lights[l].Colour * 0.01f;
             }
 
             //Reflection
@@ -142,7 +207,7 @@ namespace SphereScene {
             if (Recursion > 0) {
                 Ray Reflect = new Ray(Hitpoint.Position, Vector3.Reflect(Ray.Direction, Hitpoint.Normal));
                 Reflect.Origin += Reflect.Direction * 0.01f;
-                Reflection = CalcColour(Scene, Reflect, Recursion - 1) * Hitpoint.Sphere.Reflection;
+                Reflection = CalcColour(Reflect, Recursion - 1) * Hitpoint.Sphere.Reflection;
 
             }
 
@@ -156,17 +221,32 @@ namespace SphereScene {
             int cc = 4; //Colour Channels
             byte[] ColourData = new byte[width * height * cc];
 
-            for (int i = 0; i < width; i++) {
+
+            Parallel.For(0, width, i => {
+
+                Random r = new Random();
 
                 for (int j = 0; j < height; j++) {
 
-                    Vector3 Colour = CalcColour(Scene, CreateEyeRay(Eye, LookAt, FOV, new Vector2((float)2.0 / width * i - 1, (float)2.0 / height * j - 1)), RecursionDepth);
+                    Vector3 Colour = new Vector3(0, 0, 0);
+                    int z = 0;
+                    //AA
+                    while (z < 64) {
+
+                        double X = 2.0 / width * i - 1;
+                        double Y = 2.0 / height * j - 1;
+                        Vector2 Pixel = new Vector2((float)(r.NextGaussian(X, 0.4 * 2 / width)), (float)(r.NextGaussian(Y, 0.4 * 2 / height)));
+                        Colour += CalcColour(CreateEyeRay(Eye, LookAt, FOV, Pixel), RecursionDepth);
+                        z++;
+                    }
+                    Colour /= z;
+
                     System.Windows.Media.Color c = System.Windows.Media.Color.FromScRgb(1, Colour.X, Colour.Y, Colour.Z);
-                    ColourData[(i * 4 + j * width * cc)] = c.B;         //Convert.ToByte(Math.Min(Colour.Z * 255, 255));
-                    ColourData[(i * 4 + j * width * cc + 1)] = c.G;     //Convert.ToByte(Math.Min(Colour.Y * 255, 255));
-                    ColourData[(i * 4 + j * width * cc + 2)] = c.R;     //Convert.ToByte(Math.Min(Colour.X * 255, 255));
+                    ColourData[(i * 4 + j * width * cc)] = c.B;
+                    ColourData[(i * 4 + j * width * cc + 1)] = c.G;
+                    ColourData[(i * 4 + j * width * cc + 2)] = c.R;
                 }
-            }
+            });
             WriteableBitmap.Lock();
             WriteableBitmap.WritePixels(new Int32Rect(0, 0, width, height), ColourData, width * cc, 0);
             WriteableBitmap.Unlock();

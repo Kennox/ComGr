@@ -14,14 +14,16 @@ namespace SphereScene {
         //public Vector3 Colour { get; set; }
         public Vector3 Normal { get; set; }
         public Sphere Sphere { get; set; }
+        public float Lambda { get; set; }
 
-        public HitPoint(Ray Ray, Vector3 Position, Vector3 Normal, Sphere Sphere) {
+        public HitPoint(Ray Ray, Vector3 Position, Vector3 Normal, Sphere Sphere, float Lambda) {
 
             this.Ray = Ray;
             this.Position = Position;
             //this.Colour = Colour;
             this.Normal = Normal;
             this.Sphere = Sphere;
+            this.Lambda = Lambda;
         }
     }
 }
