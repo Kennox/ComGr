@@ -15,14 +15,16 @@ namespace SphereScene {
         //public Vector3 Colour { get; set; }
         public float Reflection { get; set; }
         public float Luminous { get; set; }
+        public Vector3 Emission { get; set; }
 
-        public Sphere(Vector3 Center, float Radius, float Reflection, float Luminous) {
+        public Sphere(Vector3 Center, float Radius, float Reflection, float Luminous, Vector3 Emission) {
 
             this.Centre = Center;
             this.Radius = Radius;
             //this.Colour = Colour;
             this.Reflection = Reflection;
             this.Luminous = Luminous;
+            this.Emission = Emission;
         }
 
         public float FindHitPoint(Sphere Sphere, Ray Ray) {
@@ -61,7 +63,7 @@ namespace SphereScene {
 
         public Vector3 Colour { get; set; }
 
-        public PlainSphere(Vector3 Center, float Radius, Vector3 Colour, float Reflection, float Luminous):base(Center, Radius, Reflection, Luminous) {
+        public PlainSphere(Vector3 Center, float Radius, Vector3 Colour, float Reflection, float Luminous, Vector3 Emission):base(Center, Radius, Reflection, Luminous, Emission) {
             
             this.Colour = Colour;
         }
@@ -75,7 +77,7 @@ namespace SphereScene {
 
         public Bitmap Bitmap { get; set; }
 
-        public TextureSphere(Vector3 Center, float Radius, Bitmap Bitmap, float Reflection, float Luminous):base(Center, Radius, Reflection, Luminous) {
+        public TextureSphere(Vector3 Center, float Radius, Bitmap Bitmap, float Reflection, float Luminous, Vector3 Emission):base(Center, Radius, Reflection, Luminous, Emission) {
 
             this.Bitmap = Bitmap;
         }
@@ -93,7 +95,7 @@ namespace SphereScene {
         public Sphere S1 { get; set; }
         public Sphere S2 { get; set; }
 
-        public BVHSphere(Vector3 Center, float Radius, float Reflection, float Luminous, Sphere S1, Sphere S2):base(Center, Radius, Reflection, Luminous) {
+        public BVHSphere(Vector3 Center, float Radius, float Reflection, float Luminous, Vector3 Emission, Sphere S1, Sphere S2):base(Center, Radius, Reflection, Luminous, Emission) {
             this.S1 = S1;
             this.S2 = S2;
         }
