@@ -1,4 +1,4 @@
 # ComGr
-Ray Tracer
+Computer Graphics
 
-This is the ray tracer made during the first part of the module Computer Graphics at FHNW
+This are some implementations made in the module Computer Graphics at FHNW.
