@@ -177,8 +177,9 @@ namespace SphereScene {
                     Diffuse += Vector3.Multiply(Lights[l].Colour, Hitpoint.Sphere.GetColour(Hitpoint.Normal)) * nL;
                     Vector3 s = L - Vector3.Dot(L, Hitpoint.Normal) * Hitpoint.Normal;
                     Vector3 r = L - 2 * s;
-                    Specular += Lights[l].Colour * (float)Math.Pow(Vector3.Dot(Vector3.Normalize(r), Vector3.Normalize(Hitpoint.Position - Eye)), 10);
-
+                    if (Vector3.Dot(Vector3.Normalize(r), Vector3.Normalize(Hitpoint.Position - Eye)) > 0) {
+                        Specular += Lights[l].Colour * (float)Math.Pow(Vector3.Dot(Vector3.Normalize(r), Vector3.Normalize(Hitpoint.Position - Eye)), 10);
+                    }
                 }
 
                 //Shadow
